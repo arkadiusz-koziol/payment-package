@@ -35,13 +35,12 @@ final class PayU
 
     }
 
-    public function initGateway() {
+    public function initGateway(): void
+    {
         if ($this->env_prod) {
-            $this->url = 'https://secure.payu.in/_payment';
-
+            $this->url = 'https://secure.payu.com/_payment';
         } else {
-            $this->url = 'https://test.payu.in/_payment';
-
+            $this->url = 'https://secure.snd.payu.com/_payment';
         }
     }
 
