@@ -21,7 +21,7 @@
     "require": {
         "php": ">=8.0",
         "illuminate/support": "^9.0|^10.0|^11.0",
-        "payusdk/payu": "^1.0",
-        "guzzlehttp/guzzle": "^7.9"
+        "guzzlehttp/guzzle": "^7.9",
+        "openpayu/openpayu": "^2.3"
     }
 }

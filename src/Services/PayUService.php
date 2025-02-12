@@ -2,51 +2,83 @@
 
 namespace Skilleton\PaymentPackage\Services;
 
-use Skilleton\PaymentPackage\PayU\PayU;
+use OpenPayU_Configuration;
+use OpenPayU_Order;
 
 class PayUService
 {
-    protected $payu;
-
     public function __construct()
     {
-        $this->payu = new PayU();
-        $this->payu->key = config('payment.payu.merchant_key');
-        $this->payu->salt = config('payment.payu.salt');
-        $this->payu->env_prod = !config('payment.payu.test_mode');
-        $this->payu->initGateway();
+        $merchantPosId  = config('payment.payu.merchant_key');
+        $signatureKey   = config('payment.payu.salt');
+        $clientId       = config('payment.payu.merchant_key');
+        $clientSecret   = config('payment.payu.auth_header');
+        $testMode       = config('payment.payu.test_mode', true);
+
+        OpenPayU_Configuration::setEnvironment(
+            $testMode ? 'sandbox' : 'secure'
+        );
+        OpenPayU_Configuration::setMerchantPosId($merchantPosId);
+        OpenPayU_Configuration::setSignatureKey($signatureKey, 'MD5');
+
+        OpenPayU_Configuration::setOauthClientId($clientId);
+        OpenPayU_Configuration::setOauthClientSecret($clientSecret);
     }
 
-    /**
-     * Initiate a payment transaction using PayU.
-     * This generates and submits an HTML payment form.
-     */
     public function processPayment(array $data)
     {
-        return $this->payu->showPaymentForm($data);
+        $order = [
+            'notifyUrl'     => route('payment.payu.verify'),
+            'continueUrl'   => route('test.payu.verify'),
+            'customerIp'    => request()->ip(),
+            'merchantPosId' => config('payment.payu.merchant_key'),
+            'description'   => $data['productinfo'] ?? 'Order description',
+            'currencyCode'  => 'PLN',
+            'totalAmount'   => (int) ($data['amount'] * 100),
+            'extOrderId'    => $data['txnid'] ?? ('TXN' . time()),
+            'buyer' => [
+                'email'     => $data['email'] ?? 'test@example.com',
+                'phone'     => $data['phone'] ?? '600000000',
+                'firstName' => $data['firstname'] ?? 'TestName',
+                'lastName'  => $data['lastname'] ?? 'TestLastName',
+            ],
+            'products' => [
+                [
+                    'name'      => $data['productinfo'] ?? 'Sample Product',
+                    'unitPrice' => (int) ($data['amount'] * 100),
+                    'quantity'  => 1,
+                ]
+            ],
+        ];
+
+        $response = OpenPayU_Order::create($order);
+
+        if ($response->getStatus() == 'SUCCESS') {
+            $redirectUri = $response->getResponse()->redirectUri;
+
+            return redirect($redirectUri);
+        }
+
+        throw new \Exception("PayU create order failed: " . $response->getStatus());
     }
 
-    /**
-     * Verify a transaction based on PayU response.
-     */
     public function verifyPayment(array $data)
     {
-        return $this->payu->verifyPayment($data);
-    }
+        $orderId = $data['orderId'] ?? null;
+        if (!$orderId) {
+            return ['error' => 'Brak orderId w danych od PayU'];
+        }
 
-    /**
-     * Get transaction details by transaction ID.
-     */
-    public function getTransactionByTxnId($txnid)
-    {
-        return $this->payu->getTransactionByTxnId($txnid);
-    }
+        $response = OpenPayU_Order::retrieve($orderId);
+        if ($response->getStatus() == 'SUCCESS') {
+            $orderData = $response->getResponse()->orders[0] ?? null;
+            return [
+                'orderId'    => $orderData->orderId,
+                'extOrderId' => $orderData->extOrderId,
+                'status'     => $orderData->status,
+            ];
+        }
 
-    /**
-     * Get transaction details by PayU ID.
-     */
-    public function getTransactionByPayuId($payuid)
-    {
-        return $this->payu->getTransactionByPayuId($payuid);
+        return ['error' => 'Błąd weryfikacji zamówienia: ' . $response->getStatus()];
     }
 }
