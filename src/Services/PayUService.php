@@ -2,6 +2,7 @@
 
 namespace Skilleton\PaymentPackage\Services;
 
+use Exception;
 use OpenPayU_Configuration;
 use OpenPayU_Order;
 
@@ -25,7 +26,11 @@ class PayUService
         OpenPayU_Configuration::setOauthClientSecret($clientSecret);
     }
 
-    public function processPayment(array $data)
+    /**
+     * @throws \OpenPayU_Exception
+     * @throws Exception
+     */
+    public function processPayment(array $data): array
     {
         $order = [
             'notifyUrl'     => route('payment.payu.verify'),
@@ -59,10 +64,10 @@ class PayUService
             return redirect($redirectUri);
         }
 
-        throw new \Exception("PayU create order failed: " . $response->getStatus());
+        throw new Exception("PayU create order failed: " . $response->getStatus());
     }
 
-    public function verifyPayment(array $data)
+    public function verifyPayment(array $data): array
     {
         $orderId = $data['orderId'] ?? null;
         if (!$orderId) {

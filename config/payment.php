@@ -10,8 +10,11 @@ return [
 
     'przelewy24' => [
         'merchant_id' => env('PRZELEWY24_MERCHANT_ID'),
-        'pos_id' => env('PRZELEWY24_POS_ID'),
-        'crc_key' => env('PRZELEWY24_CRC_KEY'),
-        'test_mode' => env('PRZELEWY24_TEST_MODE', true),
+        'pos_id'      => env('PRZELEWY24_POS_ID'),
+        'crc_key'     => env('PRZELEWY24_CRC_KEY'),
+        'api_key'     => env('PRZELEWY24_API_KEY'),
+        'test_mode'   => env('PRZELEWY24_TEST_MODE', true),
+        'return'    => env('PRZELEWY24_URL_RETURN', 'p24.status'),
+        'status'    => env('PRZELEWY24_URL_STATUS', 'p24.status'),
     ],
 ];

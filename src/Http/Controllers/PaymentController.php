@@ -19,8 +19,9 @@ class PaymentController extends Controller
     /**
      * Initiate a PayU transaction.
      * This will generate an HTML form and submit it automatically.
+     * @throws \OpenPayU_Exception
      */
-    public function payuCheckout(Request $request)
+    public function payuCheckout(Request $request): array
     {
         return $this->payu->processPayment($request->all());
     }
