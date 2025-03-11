@@ -4,6 +4,7 @@ namespace Skilleton\PaymentPackage\Services;
 
 use Exception;
 use OpenPayU_Configuration;
+use OpenPayU_Exception;
 use OpenPayU_Order;
 
 class PayUService
@@ -27,7 +28,7 @@ class PayUService
     }
 
     /**
-     * @throws \OpenPayU_Exception
+     * @throws OpenPayU_Exception
      * @throws Exception
      */
     public function processPayment(array $data): array
@@ -42,16 +43,16 @@ class PayUService
             'totalAmount'   => (int) ($data['amount'] * 100),
             'extOrderId'    => $data['txnid'] ?? ('TXN' . time()),
             'buyer' => [
-                'email'     => $data['email'] ?? 'test@example.com',
-                'phone'     => $data['phone'] ?? '600000000',
-                'firstName' => $data['firstname'] ?? 'TestName',
-                'lastName'  => $data['lastname'] ?? 'TestLastName',
+                'email'     => $data['email'],
+                'phone'     => $data['phone'],
+                'firstName' => $data['firstname'],
+                'lastName'  => $data['lastname'],
             ],
             'products' => [
                 [
-                    'name'      => $data['productinfo'] ?? 'Sample Product',
+                    'name'      => $data['productinfo'],
                     'unitPrice' => (int) ($data['amount'] * 100),
-                    'quantity'  => 1,
+                    'quantity'  => $data['quantity'],
                 ]
             ],
         ];
